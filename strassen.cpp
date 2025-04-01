@@ -42,14 +42,6 @@ void strassen(int** A, int** B, int** C, int dim) {
     int** g = almatrix(newDim); //g 
     int** h = almatrix(newDim); //h 
 
-    printf("Printing out a\n");
-    printMatrix(a, newDim);
-    printf("\n");
-
-    printf("Printing out b\n");
-    printMatrix(b, newDim);
-    printf("\n");
-
     for (int i = 0; i < newDim; i++) {
         for (int j = 0; j < newDim; j++) {
             a[i][j] = A[i][j];
@@ -62,15 +54,6 @@ void strassen(int** A, int** B, int** C, int dim) {
             h[i][j] = B[i + newDim][j + newDim];
         }
     }
-
-     printf("Printing out new a\n");
-    printMatrix(a, newDim);
-    printf("\n");
-
-    printf("Printing out new b\n");
-    printMatrix(b, newDim);
-    printf("\n");
-
 
 
     /* THE SEVEN MULTIPLICATIONS */
@@ -149,8 +132,6 @@ void strassen(int** A, int** B, int** C, int dim) {
         }
     }
 
-    printf("Final Matrix:\n"); 
-    printMatrix(C, dim);
     
     dematrix(a, newDim); dematrix(b, newDim);
     dematrix(c, newDim); dematrix(d, newDim);
@@ -181,12 +162,8 @@ void strassen_pad(int** A, int** B, int** C, int dim) {
             B_padded[i][j] = B[i][j];
         }
     }
-    //printMatrix(A_padded, newDim);
-   // printMatrix(B_padded, newDim); 
-
-    //multiply that bitch 
+  
     strassen(A_padded, B_padded, C_padded, newDim);
-    //printMatrix(C_padded, newDim);
 
     //now construct the output 
     for (int i = 0; i < dim; i++) {
@@ -288,7 +265,6 @@ int main(int argc, char* argv[]) {
 
     strassen_pad(A, B, C, dim);
 
-    printf("Result:\n");
     for (int i = 0; i < dim; i++){ 
         cout << C[i][i] << endl;
     }
