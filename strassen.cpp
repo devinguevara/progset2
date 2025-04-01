@@ -7,13 +7,22 @@ int** almatrix(int dim);
 void dematrix(int** matrix, int dim);
 void printMatrix(int** matrix, int dim);
 void multiply(int** A, int** B, int** C, int dim); 
-
 void addSubtractMatrix(int** A, int** B, int** result, int dim, int sign = 1) {
     for (int i = 0; i < dim; i++) {
         for (int j = 0; j < dim; j++) {
             result[i][j] = A[i][j] + sign * B[i][j];
         }
     }
+}
+int nextPowerOf2(int n) {
+    int power = 1;
+    while (power < n) {
+        power *= 2;
+    }
+    return power;
+}
+void printf(char text){ 
+    cout << text << endl; 
 }
 void strassen(int** A, int** B, int** C, int dim) { 
 
@@ -33,6 +42,14 @@ void strassen(int** A, int** B, int** C, int dim) {
     int** g = almatrix(newDim); //g 
     int** h = almatrix(newDim); //h 
 
+    printf("Printing out a\n");
+    printMatrix(a, newDim);
+    printf("\n");
+
+    printf("Printing out b\n");
+    printMatrix(b, newDim);
+    printf("\n");
+
     for (int i = 0; i < newDim; i++) {
         for (int j = 0; j < newDim; j++) {
             a[i][j] = A[i][j];
@@ -45,6 +62,15 @@ void strassen(int** A, int** B, int** C, int dim) {
             h[i][j] = B[i + newDim][j + newDim];
         }
     }
+
+     printf("Printing out new a\n");
+    printMatrix(a, newDim);
+    printf("\n");
+
+    printf("Printing out new b\n");
+    printMatrix(b, newDim);
+    printf("\n");
+
 
 
     /* THE SEVEN MULTIPLICATIONS */
@@ -61,34 +87,34 @@ void strassen(int** A, int** B, int** C, int dim) {
 
     // for p1 = A(F-H), subtract h from f and store in temp 1
     addSubtractMatrix(f, h, temp1, newDim, -1);  
-    strassen(A, temp1, p1, newDim); 
+    multiply(A, temp1, p1, newDim); 
 
     //for p2 (A +b)h, add a and b and store in temp1
     addSubtractMatrix(a, b, temp1, newDim);
-    strassen(temp1, h, p2, newDim);
+    multiply(temp1, h, p2, newDim);
 
     //for p3 = (c + d)e, add c and d and store in temp1
     addSubtractMatrix(c, d, temp1, newDim); 
-    strassen(temp1, e, p3, newDim); 
+    multiply(temp1, e, p3, newDim); 
 
     //for p4 = d(g - e), add c and e and store in temp1
     addSubtractMatrix(g, e, temp1, newDim, -1); 
-    strassen(d, temp1, p4, newDim); 
+    multiply(d, temp1, p4, newDim); 
 
     //for p5 (a + d)(e + h), store sums in temp1 and temp2
     addSubtractMatrix(a, d, temp1, newDim); 
     addSubtractMatrix(e, h, temp2, newDim);
-    strassen(temp1, temp2, p5, newDim); 
+    multiply(temp1, temp2, p5, newDim); 
 
     //for p6= (b - d)(g + h)
     addSubtractMatrix(b, d, temp1, newDim, -1); 
     addSubtractMatrix(g, h, temp2, newDim);
-    strassen(temp1, temp2, p6, newDim); 
+    multiply(temp1, temp2, p6, newDim); 
 
     //for p7 = (c - a)(e + f)
     addSubtractMatrix(c, a, temp1, newDim, -1); 
     addSubtractMatrix(e, f, temp2, newDim);
-    strassen(temp1, temp2, p6, newDim); 
+    multiply(temp1, temp2, p7, newDim); 
     
 
     /*CALCULATING THE RESULTING MATRIX*/
@@ -122,6 +148,9 @@ void strassen(int** A, int** B, int** C, int dim) {
             C[i + newDim][j + newDim] = C22[i][j];
         }
     }
+
+    printf("Final Matrix:\n"); 
+    printMatrix(C, dim);
     
     dematrix(a, newDim); dematrix(b, newDim);
     dematrix(c, newDim); dematrix(d, newDim);
@@ -135,6 +164,43 @@ void strassen(int** A, int** B, int** C, int dim) {
     dematrix(p7, newDim);
     dematrix(temp1, newDim); dematrix(temp2, newDim);
 }
+
+void strassen_pad(int** A, int** B, int** C, int dim) {
+    //get new dim that is a power of 2, is just dim if it already is
+    int newDim = nextPowerOf2(dim);
+
+    //allocate matrices with padding 
+    int** A_padded = almatrix(newDim);
+    int** B_padded = almatrix(newDim);
+    int** C_padded = almatrix(newDim);
+
+    //literally just fill the top left corners into this matrices
+    for (int i = 0; i < dim; i++) {
+        for (int j = 0; j < dim; j++) {
+            A_padded[i][j] = A[i][j];
+            B_padded[i][j] = B[i][j];
+        }
+    }
+    //printMatrix(A_padded, newDim);
+   // printMatrix(B_padded, newDim); 
+
+    //multiply that bitch 
+    strassen(A_padded, B_padded, C_padded, newDim);
+    //printMatrix(C_padded, newDim);
+
+    //now construct the output 
+    for (int i = 0; i < dim; i++) {
+        for (int j = 0; j < dim; j++) {
+            C[i][j] = C_padded[i][j];
+        }
+    }
+
+    dematrix(A_padded, newDim);
+    dematrix(B_padded, newDim);
+    dematrix(C_padded, newDim);
+}
+
+
 
 void multiply(int** A, int** B, int** C, int dim){ 
     // you iterate up to dim again but either keep the column or the row constant bbgirl
@@ -220,8 +286,9 @@ int main(int argc, char* argv[]) {
 
     inFile.close();
 
-    strassen(A, B, C, dim);
+    strassen_pad(A, B, C, dim);
 
+    printf("Result:\n");
     for (int i = 0; i < dim; i++){ 
         cout << C[i][i] << endl;
     }
