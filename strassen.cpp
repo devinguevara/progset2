@@ -202,7 +202,7 @@ int main(int argc, char* argv[]) {
 
     inFile.close();
 
-    strassen(A, B, C, dim);
+    multiply(A, B, C, dim);
 
     printMatrix(A, dim);
     printMatrix(B, dim);
