@@ -5,6 +5,9 @@
 using namespace std;
 int** almatrix(int dim); 
 void dematrix(int** matrix, int dim);
+void printMatrix(int** matrix, int dim);
+void multiply(int** A, int** B, int** C, int dim); 
+
 void addSubtractMatrix(int** A, int** B, int** result, int dim, int sign = 1) {
     for (int i = 0; i < dim; i++) {
         for (int j = 0; j < dim; j++) {
@@ -19,79 +22,97 @@ void strassen(int** A, int** B, int** C, int dim) {
         return;
     }
 
+    //construct 8 submatrices 
     int newDim = dim / 2;
-    int** A11 = almatrix(newDim);
-    int** A12 = almatrix(newDim);
-    int** A21 = almatrix(newDim);
-    int** A22 = almatrix(newDim);
-    int** B11 = almatrix(newDim);
-    int** B12 = almatrix(newDim);
-    int** B21 = almatrix(newDim);
-    int** B22 = almatrix(newDim);
+    int** a = almatrix(newDim); //a
+    int** b = almatrix(newDim); //b
+    int** c = almatrix(newDim); //c
+    int** d = almatrix(newDim); //d
+    int** e = almatrix(newDim); //e
+    int** f = almatrix(newDim); //f 
+    int** g = almatrix(newDim); //g 
+    int** h = almatrix(newDim); //h 
 
     for (int i = 0; i < newDim; i++) {
         for (int j = 0; j < newDim; j++) {
-            A11[i][j] = A[i][j];
-            A12[i][j] = A[i][j + newDim];
-            A21[i][j] = A[i + newDim][j];
-            A22[i][j] = A[i + newDim][j + newDim];
-            B11[i][j] = B[i][j];
-            B12[i][j] = B[i][j + newDim];
-            B21[i][j] = B[i + newDim][j];
-            B22[i][j] = B[i + newDim][j + newDim];
+            a[i][j] = A[i][j];
+            b[i][j] = A[i][j + newDim];
+            c[i][j] = A[i + newDim][j];
+            d[i][j] = A[i + newDim][j + newDim];
+            e[i][j] = B[i][j];
+            f[i][j] = B[i][j + newDim];
+            g[i][j] = B[i + newDim][j];
+            h[i][j] = B[i + newDim][j + newDim];
         }
     }
 
-    int** M1 = almatrix(newDim);
-    int** M2 = almatrix(newDim);
-    int** M3 = almatrix(newDim);
-    int** M4 = almatrix(newDim);
-    int** M5 = almatrix(newDim);
-    int** M6 = almatrix(newDim);
-    int** M7 = almatrix(newDim);
+
+    /* THE SEVEN MULTIPLICATIONS */
+    int** p1 = almatrix(newDim);
+    int** p2 = almatrix(newDim);
+    int** p3 = almatrix(newDim);
+    int** p4 = almatrix(newDim);
+    int** p5 = almatrix(newDim);
+    int** p6 = almatrix(newDim);
+    int** p7 = almatrix(newDim);
     
     int** temp1 = almatrix(newDim);
     int** temp2 = almatrix(newDim);
+
+    // for p1 = A(F-H), subtract h from f and store in temp 1
+    addSubtractMatrix(f, h, temp1, newDim, -1);  
+    strassen(A, temp1, p1, newDim); 
+
+    //for p2 (A +b)h, add a and b and store in temp1
+    addSubtractMatrix(a, b, temp1, newDim);
+    strassen(temp1, h, p2, newDim);
+
+    //for p3 = (c + d)e, add c and d and store in temp1
+    addSubtractMatrix(c, d, temp1, newDim); 
+    strassen(temp1, e, p3, newDim); 
+
+    //for p4 = d(g - e), add c and e and store in temp1
+    addSubtractMatrix(g, e, temp1, newDim, -1); 
+    strassen(d, temp1, p4, newDim); 
+
+    //for p5 (a + d)(e + h), store sums in temp1 and temp2
+    addSubtractMatrix(a, d, temp1, newDim); 
+    addSubtractMatrix(e, h, temp2, newDim);
+    strassen(temp1, temp2, p5, newDim); 
+
+    //for p6= (b - d)(g + h)
+    addSubtractMatrix(b, d, temp1, newDim, -1); 
+    addSubtractMatrix(g, h, temp2, newDim);
+    strassen(temp1, temp2, p6, newDim); 
+
+    //for p7 = (c - a)(e + f)
+    addSubtractMatrix(c, a, temp1, newDim, -1); 
+    addSubtractMatrix(e, f, temp2, newDim);
+    strassen(temp1, temp2, p6, newDim); 
     
-    addSubtractMatrix(A11, A22, temp1, newDim);
-    addSubtractMatrix(B11, B22, temp2, newDim);
-    strassen(temp1, temp2, M1, newDim);
-    
-    addSubtractMatrix(A21, A22, temp1, newDim);
-    strassen(temp1, B11, M2, newDim);
-    
-    addSubtractMatrix(B12, B22, temp1, newDim, -1);
-    strassen(A11, temp1, M3, newDim);
-    
-    addSubtractMatrix(B21, B11, temp1, newDim, -1);
-    strassen(A22, temp1, M4, newDim);
-    
-    addSubtractMatrix(A11, A12, temp1, newDim);
-    strassen(temp1, B22, M5, newDim);
-    
-    addSubtractMatrix(A21, A11, temp1, newDim, -1);
-    addSubtractMatrix(B11, B12, temp2, newDim);
-    strassen(temp1, temp2, M6, newDim);
-    
-    addSubtractMatrix(A12, A22, temp1, newDim, -1);
-    addSubtractMatrix(B21, B22, temp2, newDim);
-    strassen(temp1, temp2, M7, newDim);
-    
+
+    /*CALCULATING THE RESULTING MATRIX*/
     int** C11 = almatrix(newDim);
     int** C12 = almatrix(newDim);
     int** C21 = almatrix(newDim);
     int** C22 = almatrix(newDim);
-    
-    addSubtractMatrix(M1, M4, temp1, newDim);
-    addSubtractMatrix(temp1, M7, temp2, newDim, -1);
-    addSubtractMatrix(temp2, M5, C11, newDim);
-    
-    addSubtractMatrix(M3, M5, C12, newDim);
-    addSubtractMatrix(M2, M4, C21, newDim);
-    
-    addSubtractMatrix(M1, M3, temp1, newDim);
-    addSubtractMatrix(temp1, M6, temp2, newDim, -1);
-    addSubtractMatrix(temp2, M2, C22, newDim);
+
+    // AE + BG = -p2 + p4 + p5 + p6
+    addSubtractMatrix(p4, p2, temp1, newDim, -1);
+    addSubtractMatrix(p5, p6, temp2, newDim); 
+    addSubtractMatrix(temp1, temp2, C11, newDim); 
+
+    // AF + BH = p1 + p2
+    addSubtractMatrix(p1, p2, C12, newDim); 
+
+    // CE + DG = p3 + p4
+    addSubtractMatrix(p3, p4, C21, newDim); 
+
+    // CF + DH = p1 - p3 + p5 + p7
+    addSubtractMatrix(p1, p3, temp1, newDim, -1);
+    addSubtractMatrix(p5, p7, temp2, newDim); 
+    addSubtractMatrix(temp1, temp2, C22, newDim); 
+
     
     for (int i = 0; i < newDim; i++) {
         for (int j = 0; j < newDim; j++) {
@@ -102,19 +123,18 @@ void strassen(int** A, int** B, int** C, int dim) {
         }
     }
     
-    dematrix(A11, newDim); dematrix(A12, newDim);
-    dematrix(A21, newDim); dematrix(A22, newDim);
-    dematrix(B11, newDim);  dematrix(B12, newDim);
-    dematrix(B21, newDim);  dematrix(B22, newDim);
+    dematrix(a, newDim); dematrix(b, newDim);
+    dematrix(c, newDim); dematrix(d, newDim);
+    dematrix(e, newDim);  dematrix(f, newDim);
+    dematrix(g, newDim);  dematrix(h, newDim);
     dematrix(C11, newDim); dematrix(C12, newDim);
     dematrix(C21, newDim); dematrix(C22, newDim);
-    dematrix(M1, newDim); dematrix(M2, newDim);
-    dematrix(M3, newDim); dematrix(M4, newDim);
-    dematrix(M5, newDim); dematrix(M6, newDim);
-    dematrix(M7, newDim);
+    dematrix(p1, newDim); dematrix(p2, newDim);
+    dematrix(p3, newDim); dematrix(p4, newDim);
+    dematrix(p5, newDim); dematrix(p6, newDim);
+    dematrix(p7, newDim);
     dematrix(temp1, newDim); dematrix(temp2, newDim);
 }
-
 
 void multiply(int** A, int** B, int** C, int dim){ 
     // you iterate up to dim again but either keep the column or the row constant bbgirl
@@ -160,8 +180,6 @@ void printMatrix(int** matrix, int dim) {
 
 int main(int argc, char* argv[]) {
 
-    cout << "Hello, World!" << endl;
-
     if (argc < 4){ 
         cout << "Ur missing an argument hun" << endl; 
         return 1; 
@@ -202,12 +220,12 @@ int main(int argc, char* argv[]) {
 
     inFile.close();
 
-    multiply(A, B, C, dim);
+    strassen(A, B, C, dim);
 
-    printMatrix(A, dim);
-    printMatrix(B, dim);
-    printMatrix(C, dim);
-
+    for (int i = 0; i < dim; i++){ 
+        cout << C[i][i] << endl;
+    }
+  
     dematrix(A, dim); 
     dematrix(B, dim);
     dematrix(C, dim);
