@@ -1,5 +1,6 @@
 import numpy as np
 import sys
+import time 
 
 def matrix_mult(A, B):
     """Performs naive matrix multiplication of two square matrices A and B."""
@@ -11,9 +12,9 @@ def matrix_mult(A, B):
                 product[i, j] += A[i, k] * B[k, j]
     return product
 
-def generate_random_matrix(n, value_set):
+def generate_random_matrix(n):
     """Generates an n x n matrix with entries randomly selected from value_set."""
-    return np.random.choice(value_set, size=(n, n))
+    return np.random.int(0, 2, size=(n, n))
 
 def add_subtract_matrix(A, B, operation=1):
     """ Adds or subtracts two matrices using NumPy """
@@ -22,25 +23,24 @@ def add_subtract_matrix(A, B, operation=1):
 def strassen(A, B):
     dim = A.shape[0]
     
+    #if the dimension is 1 or is under the cutoff then just do naive implementation 
     if dim == 1:
-        return A * B
+        return matrix_mult(A, B)
     
     newDim = dim // 2
     
-    # Divide matrices into quadrants using NumPy slicing
+    #split up matrices 
     a, b, c, d = A[:newDim, :newDim], A[:newDim, newDim:], A[newDim:, :newDim], A[newDim:, newDim:]
     e, f, g, h = B[:newDim, :newDim], B[:newDim, newDim:], B[newDim:, :newDim], B[newDim:, newDim:]
 
- 
-    
-    # Compute the 7 products
-    p1 = matrix_mult(a, add_subtract_matrix(f, h, -1))
-    p2 = matrix_mult(add_subtract_matrix(a, b), h)
-    p3 = matrix_mult(add_subtract_matrix(c, d), e)
-    p4 = matrix_mult(d, add_subtract_matrix(g, e, -1))
-    p5 = matrix_mult(add_subtract_matrix(a, d), add_subtract_matrix(e, h))
-    p6 = matrix_mult(add_subtract_matrix(b, d, -1), add_subtract_matrix(g, h))
-    p7 = matrix_mult(add_subtract_matrix(c, a, -1), add_subtract_matrix(e, f))
+    #do 7 multiplications 
+    p1 = strassen(a, add_subtract_matrix(f, h, -1))
+    p2 = strassen(add_subtract_matrix(a, b), h)
+    p3 = strassen(add_subtract_matrix(c, d), e)
+    p4 = strassen(d, add_subtract_matrix(g, e, -1))
+    p5 = strassen(add_subtract_matrix(a, d), add_subtract_matrix(e, h))
+    p6 = strassen(add_subtract_matrix(b, d, -1), add_subtract_matrix(g, h))
+    p7 = strassen(add_subtract_matrix(c, a, -1), add_subtract_matrix(e, f))
     
     #AE + BG = -p2 + p4 + p5 + p6
     C11 = add_subtract_matrix(add_subtract_matrix(p4, p2, -1), add_subtract_matrix(p6, p5))
@@ -54,7 +54,7 @@ def strassen(A, B):
     #CF + DH = p1 - p3 + p5 + p7
     C22 = add_subtract_matrix(add_subtract_matrix(p1, p3, -1), add_subtract_matrix(p5, p7))
     
-    #Construct result matrix using NumPy block operations
+    #construct result matrix using numpy
     C = np.block([[C11, C12], [C21, C22]])
 
     
@@ -65,6 +65,8 @@ def next_power_of_2(n):
     return 2**int(np.ceil(np.log2(n)))
 
 def strassen_pad(A, B):
+
+
     dim = A.shape[0]
     newDim = next_power_of_2(dim)
   
@@ -74,6 +76,7 @@ def strassen_pad(A, B):
     C_padded = strassen(A_padded, B_padded)
     
     return C_padded[:dim, :dim]
+    
 
 def main():
     if len(sys.argv) < 4: 
