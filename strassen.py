@@ -1,4 +1,5 @@
 import numpy as np
+import sys
 
 def matrix_mult(A, B):
     """Performs naive matrix multiplication of two square matrices A and B."""
@@ -10,70 +11,92 @@ def matrix_mult(A, B):
                 product[i, j] += A[i, k] * B[k, j]
     return product
 
-def strassen(A, B, n0):
-    """Performs Strassen's matrix multiplication with a crossover point n0."""
-    n = len(A)
-    if n <= n0:
-        return matrix_mult(A, B)
-    
-    # Ensure n is even by padding if necessary
-    padded = False
-    if n % 2 != 0:
-        A = np.pad(A, ((0, 1), (0, 1)), mode='constant')
-        B = np.pad(B, ((0, 1), (0, 1)), mode='constant')
-        n += 1
-        padded = True
-    
-    mid = n // 2
-    A11, A12, A21, A22 = A[:mid, :mid], A[:mid, mid:], A[mid:, :mid], A[mid:, mid:]
-    B11, B12, B21, B22 = B[:mid, :mid], B[:mid, mid:], B[mid:, :mid], B[mid:, mid:]
-    
-    P1 = strassen(A11, B12 - B22, n0)
-    P2 = strassen(A11 + A12, B22, n0)
-    P3 = strassen(A21 + A22, B11, n0)
-    P4 = strassen(A22, B21 - B11, n0)
-    P5 = strassen(A11 + A22, B11 + B22, n0)
-    P6 = strassen(A12 - A22, B21 + B22, n0)
-    P7 = strassen(A21 - A11, B11 + B12, n0)
-    
-    C11 = P5 + P4 - P2 + P6
-    C12 = P1 + P2
-    C21 = P3 + P4
-    C22 = P5 + P1 - P3 - P7
-    
-    C = np.vstack((np.hstack((C11, C12)), np.hstack((C21, C22))))
-    return C[:len(A) - (1 if padded else 0), :len(A) - (1 if padded else 0)]
-
 def generate_random_matrix(n, value_set):
     """Generates an n x n matrix with entries randomly selected from value_set."""
     return np.random.choice(value_set, size=(n, n))
 
+def add_subtract_matrix(A, B, operation=1):
+    """ Adds or subtracts two matrices using NumPy """
+    return np.add(A, operation * B)
+
+def strassen(A, B):
+    dim = A.shape[0]
+    
+    if dim == 1:
+        return A * B
+    
+    newDim = dim // 2
+    
+    # Divide matrices into quadrants using NumPy slicing
+    a, b, c, d = A[:newDim, :newDim], A[:newDim, newDim:], A[newDim:, :newDim], A[newDim:, newDim:]
+    e, f, g, h = B[:newDim, :newDim], B[:newDim, newDim:], B[newDim:, :newDim], B[newDim:, newDim:]
+
+ 
+    
+    # Compute the 7 products
+    p1 = matrix_mult(a, add_subtract_matrix(f, h, -1))
+    p2 = matrix_mult(add_subtract_matrix(a, b), h)
+    p3 = matrix_mult(add_subtract_matrix(c, d), e)
+    p4 = matrix_mult(d, add_subtract_matrix(g, e, -1))
+    p5 = matrix_mult(add_subtract_matrix(a, d), add_subtract_matrix(e, h))
+    p6 = matrix_mult(add_subtract_matrix(b, d, -1), add_subtract_matrix(g, h))
+    p7 = matrix_mult(add_subtract_matrix(c, a, -1), add_subtract_matrix(e, f))
+    
+    #AE + BG = -p2 + p4 + p5 + p6
+    C11 = add_subtract_matrix(add_subtract_matrix(p4, p2, -1), add_subtract_matrix(p6, p5))
+
+    #AF + BH = p1 + p2
+    C12 = add_subtract_matrix(p1, p2)
+
+    #CE + DG = p3 + p4
+    C21 = add_subtract_matrix(p3, p4)
+
+    #CF + DH = p1 - p3 + p5 + p7
+    C22 = add_subtract_matrix(add_subtract_matrix(p1, p3, -1), add_subtract_matrix(p5, p7))
+    
+    #Construct result matrix using NumPy block operations
+    C = np.block([[C11, C12], [C21, C22]])
+
+    
+    return C
+
+def next_power_of_2(n):
+    """ Returns the next power of 2 greater than or equal to n """
+    return 2**int(np.ceil(np.log2(n)))
+
+def strassen_pad(A, B):
+    dim = A.shape[0]
+    newDim = next_power_of_2(dim)
+  
+    A_padded = np.pad(A, ((0, newDim - dim), (0, newDim - dim)), mode='constant')
+    B_padded = np.pad(B, ((0, newDim - dim), (0, newDim - dim)), mode='constant')
+   
+    C_padded = strassen(A_padded, B_padded)
+    
+    return C_padded[:dim, :dim]
+
 def main():
-    n = 3  # Example size, can be modified
-    mode = 1  # Change to 0 for values {0,1,2}, or 1 for values {0,1,-1}
-    n0 = 2  # Crossover point for Strassen's algorithm
-    
-    value_sets = [[0, 1, 2], [0, 1, -1]]
-    A = generate_random_matrix(n, value_sets[mode])
-    B = generate_random_matrix(n, value_sets[mode])
-    
-    print("Matrix A:")
-    print(A)
-    print("Matrix B:")
-    print(B)
-    
-    C_strassen = strassen(A, B, n0)
-    C_naive = matrix_mult(A, B)
-    
-    print("Strassen Result:")
-    print(C_strassen)
-    print("Naive Result:")
-    print(C_naive)
-    
-    if np.array_equal(C_strassen, C_naive):
-        print("Test Passed: Strassen's and Naive results match.")
-    else:
-        print("Test Failed: Strassen's result differs from Naive result.")
+    if len(sys.argv) < 4: 
+        print("Incorrect Number of Arguments")
+
+    flag = int(sys.argv[1])
+    d = int(sys.argv[2])
+    filename = sys.argv[3]
+
+    #reconstruct the matrices 
+    with open(filename, 'r') as file:
+        data = list(map(int, file.read().splitlines()))
+
+    A = np.array(data[:d**2]).reshape(d, d)
+    B = np.array(data[d**2:]).reshape(d, d)
+
+    #multiply them
+    C = strassen_pad(A, B)
+
+    #return result 
+    for i in range(d): 
+        print(C[i][i])
+
 
 if __name__ == "__main__":
     main()
