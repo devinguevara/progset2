@@ -34,13 +34,13 @@ def strassen(A, B):
     e, f, g, h = B[:newDim, :newDim], B[:newDim, newDim:], B[newDim:, :newDim], B[newDim:, newDim:]
 
     #do 7 multiplications 
-    p1 = strassen(a, add_subtract_matrix(f, h, -1))
-    p2 = strassen(add_subtract_matrix(a, b), h)
-    p3 = strassen(add_subtract_matrix(c, d), e)
-    p4 = strassen(d, add_subtract_matrix(g, e, -1))
-    p5 = strassen(add_subtract_matrix(a, d), add_subtract_matrix(e, h))
-    p6 = strassen(add_subtract_matrix(b, d, -1), add_subtract_matrix(g, h))
-    p7 = strassen(add_subtract_matrix(c, a, -1), add_subtract_matrix(e, f))
+    p1 = matrix_mult(a, add_subtract_matrix(f, h, -1))
+    p2 = matrix_mult(add_subtract_matrix(a, b), h)
+    p3 = matrix_mult(add_subtract_matrix(c, d), e)
+    p4 = matrix_mult(d, add_subtract_matrix(g, e, -1))
+    p5 = matrix_mult(add_subtract_matrix(a, d), add_subtract_matrix(e, h))
+    p6 = matrix_mult(add_subtract_matrix(b, d, -1), add_subtract_matrix(g, h))
+    p7 = matrix_mult(add_subtract_matrix(c, a, -1), add_subtract_matrix(e, f))
     
     #AE + BG = -p2 + p4 + p5 + p6
     C11 = add_subtract_matrix(add_subtract_matrix(p4, p2, -1), add_subtract_matrix(p6, p5))
@@ -66,16 +66,32 @@ def next_power_of_2(n):
 
 def strassen_pad(A, B):
 
+    # Don't padd if its a power of 2 
+    # don't pad to the nearest power of 2 
+    # you should only pad 17 to 18
 
-    dim = A.shape[0]
-    newDim = next_power_of_2(dim)
+    # dim = A.shape[0]
+    # newDim = next_power_of_2(dim)
   
-    A_padded = np.pad(A, ((0, newDim - dim), (0, newDim - dim)), mode='constant')
-    B_padded = np.pad(B, ((0, newDim - dim), (0, newDim - dim)), mode='constant')
+    # A_padded = np.pad(A, ((0, newDim - dim), (0, newDim - dim)), mode='constant')
+    # B_padded = np.pad(B, ((0, newDim - dim), (0, newDim - dim)), mode='constant')
    
-    C_padded = strassen(A_padded, B_padded)
+    # C_padded = strassen(A_padded, B_padded)
     
-    return C_padded[:dim, :dim]
+    # return C_padded[:dim, :dim]
+    dim = A.shape[0]
+   
+    if (dim % 2 == 1): 
+
+        newDim = next_power_of_2(dim)
+    
+        A_padded = np.pad(A, ((0, newDim - dim), (0, newDim - dim)), mode='constant')
+        B_padded = np.pad(B, ((0, newDim - dim), (0, newDim - dim)), mode='constant')
+    
+        C_padded = strassen(A_padded, B_padded)
+        return C_padded[:dim, :dim]
+    else: 
+        return strassen(A, B)
     
 
 def main():
