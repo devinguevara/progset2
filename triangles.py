@@ -6,7 +6,7 @@ def matrix_mult(A, B):
     n = len(A)
     return np.dot(A, B)  # Using numpy's dot for better performance
 
-def strassen(A, B, n_0=64):
+def strassen(A, B, n_0=37):
     """Strassen's algorithm with crossover to naive"""
     if A.shape[0] <= n_0:
         return matrix_mult(A, B)
@@ -60,7 +60,7 @@ def expected_triangles(n, p):
     """Calculate expected number of triangles"""
     return (n * (n-1) * (n-2) // 6) * p**3
 
-def run_fast_experiment():
+def experiment():
     n = 1024
     probabilities = [0.01, 0.02, 0.03, 0.04, 0.05]
     num_trials = 5
@@ -82,5 +82,5 @@ def run_fast_experiment():
 
 if __name__ == "__main__":
     start_time = time.time()
-    run_fast_experiment()
+    experiment()
     print(f"\nTotal runtime: {time.time() - start_time:.2f} seconds")
